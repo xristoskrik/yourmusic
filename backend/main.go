@@ -36,6 +36,8 @@ func main() {
 	//fsHandler := http.FileServer(http.Dir(filepathRoot))
 	//mux.Handle("/", fsHandler)
 	mux.HandleFunc("POST /api/users", apiCfg.UserCreateHandler)
+	mux.HandleFunc("DELETE /api/users", apiCfg.UserDeleteHandler)
+	mux.HandleFunc("PUT /api/users", apiCfg.UserUpdateHandler)
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
