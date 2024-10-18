@@ -2,8 +2,11 @@ package structs
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/xristoskrik/yourmusic/auth"
@@ -17,6 +20,7 @@ type ApiConfig struct {
 }
 
 func (cfg *ApiConfig) UserCreateHandler(w http.ResponseWriter, r *http.Request) {
+
 	type parameters struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
@@ -96,6 +100,118 @@ func (cfg *ApiConfig) UserUpdateEmailHandler(w http.ResponseWriter, r *http.Requ
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+	})
+
+}
+func (cfg *ApiConfig) UserLogoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   false,
+		Path:     "/",
+	})
+	jsonResponse.RespondWithJSON(w, 200, "ok")
+}
+func (cfg *ApiConfig) UserProfileHandler(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println(r.Header)
+
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Couldn't find JWT in cookies", err)
+		return
+	}
+
+	token := cookie.Value
+	fmt.Println("JWT Token from cookie:", token)
+
+	userID, err := auth.ValidateJWT(token, cfg.SecretKey)
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
+		return
+	}
+	user, err := cfg.DB.GetUserById(context.Background(), userID)
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email or password wrong", err)
+		return
+	}
+	jsonResponse.RespondWithJSON(w, 200, database.User{
+		ID:    user.ID,
+		Email: user.Email,
+	})
+
+}
+
+func (cfg *ApiConfig) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+	type response struct {
+		database.User
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		return
+	}
+	user, err := cfg.DB.GetUser(context.Background(), params.Email)
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email or password wrong", err)
+		return
+	}
+	err = auth.CheckPasswordHash(params.Password, user.HashedPassword)
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email or password wrong", err)
+		return
+	}
+	accessToken, err := auth.MakeJWT(
+		user.ID,
+		cfg.SecretKey,
+		time.Hour,
+	)
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Couldn't create access JWT", err)
+		return
+	}
+
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Couldn't create refresh token", err)
+		return
+	}
+
+	_, err = cfg.DB.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+		UserID:    user.ID,
+		Token:     refreshToken,
+		ExpiresAt: sql.NullTime{Time: time.Now().AddDate(0, 0, 60), Valid: true},
+	})
+	if err != nil {
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Couldn't save refresh token", err)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    accessToken,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   false,
+		Path:     "/",
+	})
+	jsonResponse.RespondWithJSON(w, 200, response{
+		User: database.User{
+			ID:    user.ID,
+			Email: user.Email,
+		},
+		Token:        accessToken,
+		RefreshToken: refreshToken,
 	})
 
 }

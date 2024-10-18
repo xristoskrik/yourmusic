@@ -76,6 +76,22 @@ func (q *Queries) GetUser(ctx context.Context, email string) (User, error) {
 	return i, err
 }
 
+const getUserById = `-- name: GetUserById :one
+SELECT id,email FROM users WHERE $1 = users.id
+`
+
+type GetUserByIdRow struct {
+	ID    uuid.UUID
+	Email string
+}
+
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (GetUserByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, id)
+	var i GetUserByIdRow
+	err := row.Scan(&i.ID, &i.Email)
+	return i, err
+}
+
 const updateUserEmailById = `-- name: UpdateUserEmailById :one
 UPDATE users SET email = $1
 WHERE id = $2
