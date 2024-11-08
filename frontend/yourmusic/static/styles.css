@@ -1,0 +1,157 @@
+body {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 100vh;
+
+    background: linear-gradient(to top, #1c1b1b 10%, #302f2f 70%, #393838 20%);
+    background-size: 100% 100%;
+
+}
+
+
+
+body.dark {
+    color: #E0E0E0;
+    background-color: #232323;
+}
+
+.wrapper {
+
+    display: flex;
+    justify-content: center;
+    width: 50%;
+    height: 100vh;
+
+    color: #E0E0E0;
+    background-color: #191818;
+}
+
+.form-class {
+    border: 0.5vh solid #3c3b3b;
+    border-radius: 1vh 1vh 1vh 1vh;
+    padding: 2vh;
+
+
+}
+
+.centered-div {
+    display: grid;
+    place-items: center;
+
+    height: 100vh;
+
+    text-align: left;
+}
+
+form {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: left;
+
+}
+
+button {
+    height: 8vh;
+    width: 20vh;
+    background-color: #2D2D2D;
+    color: #BB86FC;
+}
+
+input {
+
+    background-color: #1E1E1E;
+    color: #E0E0E0;
+    height: 4vh;
+    width: 40vh;
+    border: 0.6vh solid #444444;
+
+    padding: 0.5vh;
+
+}
+
+@media (max-width: 600px) {
+    .wrapper {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+
+        color: #E0E0E0;
+        background-color: #121212;
+    }
+}
+
+.rounded-button {
+    margin-top: 5vh;
+
+    width: 42vh;
+
+    border: none;
+
+    border-radius: 15px;
+
+    background-color: #1f1f1f;
+
+    color: #ffffff;
+
+    font-size: 16px;
+
+    cursor: pointer;
+
+    transition: background-color 0.3s;
+
+}
+
+.rounded-button:hover {
+    background-color: #3a3a3a;
+
+}
+
+.rounded-button:disabled {
+    background-color: #444444;
+
+    cursor: not-allowed;
+
+}
+
+a {
+    color: white;
+}
+
+p {
+    text-align: left;
+
+}
+
+h2 {
+    text-align: center;
+
+}
+
+.logo {
+    margin-top: 2.5vh;
+    margin-bottom: 0%;
+    display: inline-block;
+    font-size: 36px;
+    background: linear-gradient(to right, red 10%, pink 50%, blue 20%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.buttonTest {
+    border: solid black 1px;
+    border-radius: 10px;
+    background-color: #302d2d;
+    font-size: 1.2em;
+}
+
+.buttonTest:hover {
+    background-color: #413f3f;
+}
+
+.buttonTest:active {
+    background-color: #302d2d;
+}
