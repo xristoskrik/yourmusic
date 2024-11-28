@@ -5,7 +5,9 @@ CREATE TABLE users(
         updated_at TIMESTAMP NOT NULL,
         email TEXT NOT NULL,
         UNIQUE(email),
-        hashed_password TEXT NOT NULL);
+        hashed_password TEXT NOT NULL,
+        username TEXT NOT NULL,
+        UNIQUE(username));
 
 -- +goose Down
 DROP TABLE users;

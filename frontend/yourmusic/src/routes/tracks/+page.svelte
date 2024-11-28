@@ -1,4 +1,35 @@
 <script>
+    import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
+    const handleToken = async (event) => {
+        const token = localStorage.getItem("token");
+        console.log(token);
+        if (token !== null) {
+            fetch("http://localhost:8080/api/users/profile", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch profile");
+                    }
+                    console.log(response.json());
+                })
+                .then((data) => {
+                    console.log("Profile:", data);
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    goto("/login");
+                });
+        } else {
+            goto("/login");
+        }
+    };
     let audio;
     const playAudio = () => {
         if (audio.paused) {
@@ -19,6 +50,9 @@
         "tria",
         "tria",
     ];
+    onMount(() => {
+        handleToken();
+    });
 </script>
 
 <main>

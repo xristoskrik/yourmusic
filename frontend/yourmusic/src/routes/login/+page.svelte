@@ -1,30 +1,34 @@
 <script>
+    import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
     let email = "";
     let password = "";
 
     const handleToken = async (event) => {
         const token = localStorage.getItem("token");
-
-        fetch("http://localhost:8080/api/users/profile", {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-            credentials: "include",
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Failed to fetch profile");
-                }
-                return response.json();
+        if (token !== null) {
+            fetch("http://localhost:8080/api/users/profile", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
             })
-            .then((data) => {
-                console.log("Profile:", data);
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-            });
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch profile");
+                    }
+                    console.log(response.json());
+                    goto("/profile");
+                })
+                .then((data) => {
+                    console.log("Profile:", data);
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        }
     };
 
     const handleSubmit = async (event) => {
@@ -51,7 +55,8 @@
                 const result = await response.json();
                 console.log(result.token);
                 localStorage.setItem("token", result.token);
-                alert("Log-In successful!");
+
+                goto("/profile");
                 console.log(result);
             } else {
                 const error = await response.json();
@@ -62,6 +67,9 @@
             alert("Can't log in.");
         }
     };
+    onMount(() => {
+        handleToken();
+    });
 </script>
 
 <main>
@@ -75,7 +83,6 @@
             <input type="password" id="password" bind:value={password} />
             <button>Log In!</button>
         </form>
-        <button on:click={handleToken}>Token!</button>
     </div>
 </main>
 

@@ -1,3 +1,4 @@
 backend/out
 backend/.env
 music
+.DS_STORE
