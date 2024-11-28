@@ -6,36 +6,55 @@
     const handleAlbum = async () => {
         console.log("go to album");
     };
+    const handleLogOut = async () => {
+        const response = await fetch("http://localhost:8080/api/users/logout", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: "nothing",
+        });
 
+        if (response.ok) {
+            const result = await response.json();
+            console.log(result.token);
+            localStorage.setItem("token", result.token);
+
+            goto("/login");
+            console.log(result);
+        }
+    };
     const handleToken = async () => {
         const token = localStorage.getItem("token");
-        if (token !== null) {
-            fetch("http://localhost:8080/api/users/profile", {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch profile");
-                    }
-                    return response.json();
-                })
-                .then((data) => {
-                    console.log("Profile:", data);
-                    email = data.Email;
-                    id = data.ID;
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                    goto("/login");
-                });
-        } else {
+        if (token === "undefined" || token === null) {
+            console.log(token);
             goto("/login");
+            return;
         }
+
+        fetch("http://localhost:8080/api/users/profile", {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch profile");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                console.log("Profile:", data);
+                email = data.Email;
+                id = data.ID;
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                goto("/login");
+            });
     };
 
     onMount(() => {
@@ -61,6 +80,7 @@
     <!--
     <p>{email}</p>
     <p>{id}</p>-->
+    <button on:click={handleLogOut}>Logout</button>
     <div class="artists">
         <p class="artists-header">Artists</p>
         {#each artists as artist}

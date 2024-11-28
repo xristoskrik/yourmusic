@@ -6,29 +6,32 @@
 
     const handleToken = async (event) => {
         const token = localStorage.getItem("token");
-        if (token !== null) {
-            fetch("http://localhost:8080/api/users/profile", {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch profile");
-                    }
-                    console.log(response.json());
-                    goto("/profile");
-                })
-                .then((data) => {
-                    console.log("Profile:", data);
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                });
+        if (token === "undefined" || token === null) {
+            console.log(token);
+            return;
         }
+
+        fetch("http://localhost:8080/api/users/profile", {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch profile");
+                }
+                console.log(response.json());
+                goto("/profile");
+            })
+            .then((data) => {
+                console.log("Profile:", data);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
     };
 
     const handleSubmit = async (event) => {
