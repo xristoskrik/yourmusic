@@ -1,29 +1,57 @@
 <script>
-    let username = "";
     let email = "";
     let password = "";
+
+    const handleToken = async (event) => {
+        const token = localStorage.getItem("token");
+
+        fetch("http://localhost:8080/api/users/profile", {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch profile");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                console.log("Profile:", data);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
 
         const payload = {
-            username,
             email,
             password,
         };
 
         try {
-            const response = await fetch("http://localhost:8080/api/users", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetch(
+                "http://localhost:8080/api/users/login",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
                 },
-                body: JSON.stringify(payload),
-            });
+            );
 
             if (response.ok) {
                 const result = await response.json();
-                alert("Sign-up successful!");
+                console.log(result.token);
+                localStorage.setItem("token", result.token);
+                alert("Log-In successful!");
                 console.log(result);
             } else {
                 const error = await response.json();
@@ -31,24 +59,23 @@
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("An error occurred while signing up.");
+            alert("Can't log in.");
         }
     };
 </script>
 
 <main>
-    <div class="signup">
+    <div class="login">
         <h1 class="logo">yourMusic 🎶</h1>
-        <p class="logo">Sign Up</p>
+        <p class="logo">Log In</p>
         <form on:submit|preventDefault={handleSubmit}>
-            <label for="username">Username:</label>
-            <input type="username" id="username" bind:value={username} />
-            <label for="email">Email:</label>
-            <input type="email" id="email" bind:value={email} />
+            <label for="username">Username or email:</label>
+            <input type="username" id="username" bind:value={email} />
             <label for="password">Password:</label>
             <input type="password" id="password" bind:value={password} />
-            <button>Sign Up!</button>
+            <button>Log In!</button>
         </form>
+        <button on:click={handleToken}>Token!</button>
     </div>
 </main>
 
@@ -61,7 +88,7 @@
         align-items: center;
         background-color: #121212;
     }
-    .signup {
+    .login {
         width: 40%;
         height: 70%;
         transition: width 0.5s ease-in-out;
@@ -105,7 +132,7 @@
         margin-bottom: 1vh;
     }
     @media (max-width: 600px) {
-        .signup {
+        .login {
             width: 70%;
         }
     }
