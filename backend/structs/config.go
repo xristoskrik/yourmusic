@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,14 +25,17 @@ func (cfg *ApiConfig) UserCreateHandler(w http.ResponseWriter, r *http.Request) 
 	type parameters struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
+		Username string `json:"username"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
+
 	err := decoder.Decode(&params)
 	if err != nil {
 		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
+	fmt.Println(params)
 	hashed, err := auth.HashPassword(params.Password)
 	if err != nil {
 		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Can't create user", err)
@@ -40,6 +44,7 @@ func (cfg *ApiConfig) UserCreateHandler(w http.ResponseWriter, r *http.Request) 
 	user, err := cfg.DB.CreateUser(context.Background(), database.CreateUserParams{
 		HashedPassword: hashed,
 		Email:          params.Email,
+		Username:       params.Username,
 	})
 	if err != nil {
 		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Can't create user", err)
@@ -117,28 +122,36 @@ func (cfg *ApiConfig) UserLogoutHandler(w http.ResponseWriter, r *http.Request) 
 }
 func (cfg *ApiConfig) UserProfileHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println(r.Header)
-
-	cookie, err := r.Cookie("token")
-	if err != nil {
-		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Couldn't find JWT in cookies", err)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Missing Authorization header", nil)
 		return
 	}
+	fmt.Println(authHeader)
 
-	token := cookie.Value
-	fmt.Println("JWT Token from cookie:", token)
+	// Extract token (assuming Bearer scheme)
+	tokenParts := strings.Split(authHeader, " ")
+	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Invalid Authorization header format", nil)
+		return
+	}
+	token := tokenParts[1]
 
+	// Validate token
 	userID, err := auth.ValidateJWT(token, cfg.SecretKey)
 	if err != nil {
-		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
+		jsonResponse.RespondWithError(w, http.StatusUnauthorized, "Invalid or expired token", err)
 		return
 	}
+
+	// Fetch user details
 	user, err := cfg.DB.GetUserById(context.Background(), userID)
 	if err != nil {
-		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email or password wrong", err)
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "User not found", err)
 		return
 	}
-	jsonResponse.RespondWithJSON(w, 200, database.User{
+
+	jsonResponse.RespondWithJSON(w, http.StatusOK, database.User{
 		ID:    user.ID,
 		Email: user.Email,
 	})
@@ -162,14 +175,15 @@ func (cfg *ApiConfig) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
+	fmt.Println(params)
 	user, err := cfg.DB.GetUser(context.Background(), params.Email)
 	if err != nil {
-		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email or password wrong", err)
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email  wrong", err)
 		return
 	}
 	err = auth.CheckPasswordHash(params.Password, user.HashedPassword)
 	if err != nil {
-		jsonResponse.RespondWithError(w, http.StatusInternalServerError, "email or password wrong", err)
+		jsonResponse.RespondWithError(w, http.StatusInternalServerError, " password wrong", err)
 		return
 	}
 	accessToken, err := auth.MakeJWT(

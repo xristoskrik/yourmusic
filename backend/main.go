@@ -34,7 +34,7 @@ func main() {
 	r := chi.NewRouter()
 
 	cors := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"}, // Set the specific origin you allow
+		AllowedOrigins:   []string{"http://localhost:5173"}, // Set the specific origin you allow //http://localhost:5173
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true, // This allows cookies and other credentials to be sent
